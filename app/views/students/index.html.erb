@@ -2,7 +2,7 @@
 
 <h1>Students</h1>
 
-<table>
+<table class="responsive table table-striped">
   <thead>
     <tr>
       <th>Name</th>
@@ -26,9 +26,6 @@
   </tbody>
 </table>
 <br>
-<%= link_to 'analytics', analytic_index_path %>
+<%= link_to 'analytics', analytic_index_path , class: "btn btn-default" %>
 
-<%= link_to 'New Student', new_student_path %>
-<a target='_self' data-turbolinks="false" href="https://www.w3schools.com/images/myw3schoolsimage.jpg" download>
-  Download
-</a>
+<%= link_to 'New Student', new_student_path, class: "btn btn-default" %>
