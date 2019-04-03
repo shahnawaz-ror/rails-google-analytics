@@ -1,0 +1,336 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js
+   "></script>
+<style type="text/css">
+   table.dataTable tbody>tr.selected,
+   table.dataTable tbody>tr>.selected {
+   background-color: #A2D3F6;
+   }
+   .city-download{
+   display: none;
+   }
+</style>
+<!DOCTYPE html>
+<html>
+   <span class="count-display">
+   <head>
+      <meta charset="utf-8">
+      <meta name="google-signin-client_id" content="319066185287-65bp73lc12ig6kb4tfdlct2eocbhmlb8.apps.googleusercontent.com">
+      <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
+   </head>
+   <body>
+      <script>
+         (function(w,d,s,g,js,fs){
+           g=w.gapi||(w.gapi={});g.analytics={q:[],ready:function(f){this.q.push(f);}};
+           js=d.createElement(s);fs=d.getElementsByTagName(s)[0];
+           js.src='https://apis.google.com/js/platform.js';
+           fs.parentNode.insertBefore(js,fs);js.onload=function(){g.load('analytics');};
+         }(window,document,'script'));
+      </script>
+      <div class="container">
+         <p class="g-signin2" data-onsuccess="queryReports"></p>
+         <div id="embed-api-auth-container"></div>
+         <div class="city-download">
+            <h3>Top Cities (by downloads)</h3>
+            <div id="regions_div" style="width: 100%; height: 100%;"></div>
+         </div>
+         <h3>Item Level URL</h3>
+         <div class="container">
+            <table cellpadding="0" cellspacing="0" border="0" class="dataTable table table-striped" id="example-data">
+            </table>
+         </div>
+         <h3>Dowload statistics</h3>
+         <div class="container">
+            <table class="table table-striped">
+               <thead>
+                  <tr>
+                     <th>Total Number of downloads</th>
+                     <th>Download Yesterday</th>
+                     <th>Downloads in the past year</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr>
+                     <td id="query_output">0</td>
+                     <td id="query_output_yetserday">0</td>
+                     <td id="query_output_last_year">0</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+         <div class="row">
+            <div id="chart-container" class="col-sm-6 col-lg-6 col-md-6"></div>
+            <div id="chart-2-container" class="col-sm-6 col-lg-6 col-md-6"></div>
+         </div>
+         <div class="row">
+            <div id="chart-3-container" class="col-sm-6 col-lg-6 col-md-6"></div>
+            <div id="chart-1-container" class="col-sm-6 col-lg-6 col-md-6"></div>
+         </div>
+      </div>
+   </body>
+</html>
+<% file_title(Student.all) %>
+<script>
+   // Replace with your view ID.
+   var VIEW_ID = '192803239';
+   
+   // Query the API and print the results to the page.
+   function queryReportsshow() {
+     gapi.client.request({
+       path: '/v4/reports:batchGet',
+       root: 'https://analyticsreporting.googleapis.com/',
+       method: 'POST',
+       body: {
+         reportRequests: [
+           {
+             viewId: VIEW_ID,
+             dateRanges: [
+               {
+                 startDate: '2018-01-01',
+                 endDate: 'today'
+               }
+             ],
+              metrics: [
+               {
+                 expression: 'ga:pageviews'
+               }
+             ],
+             "dimensions":[
+             {
+               "name":"ga:pagePath"
+             }]
+           }
+         ]
+       }
+     }).then(displayResultstable, console.error.bind(console));
+   }
+   
+   function displayResultstable(response) {
+     data = response.result.reports[0].data.rows
+     x = [];
+     $.each( data, function( key, value ) {
+       x.push( [value.dimensions.toString(), + value.metrics[0].values] );
+     });
+     var columnDefs = [{
+       title: "URL",
+       targets: 0,
+       render: function ( data, type, row ) {
+         return data.substr( 0, 150 );
+       }
+     }, {
+       title: "view"
+     }];
+     var myTable;
+     myTable = $('#example-data').DataTable({
+       "sPaginationType": "full_numbers",
+       data: x,
+       columns: columnDefs,
+       dom: 'Bfrtip',        // Needs button container
+             select: 'single',
+             responsive: true,
+             altEditor: true,     // Enable altEditor
+             buttons: [{
+               text: 'Add',
+               name: 'add'        // do not change name
+             },
+             {
+               extend: 'selected', // Bind to Selected row
+               text: 'Edit',
+               name: 'edit'        // do not change name
+             },
+             {
+               extend: 'selected', // Bind to Selected row
+               text: 'Delete',
+               name: 'delete'      // do not change name
+            }]
+     });
+   }
+   gapi.analytics.ready(function() {
+     gapi.analytics.auth.authorize({
+       container: 'embed-api-auth-container',
+       clientid: '319066185287-65bp73lc12ig6kb4tfdlct2eocbhmlb8.apps.googleusercontent.com'
+     });
+     var colors = ['#4D5360','#949FB1','#D4CCC5','#E2EAE9','#F7464A'];
+     var dataChart1 = new gapi.analytics.googleCharts.DataChart({
+       query: {
+         'ids': 'ga:192803239',
+         metrics: 'ga:sessions',
+         dimensions: 'ga:country',
+         'start-date': '30daysAgo',
+         'end-date': 'yesterday',
+         'max-results': 1000,
+         sort: '-ga:sessions'
+       },
+       chart: {
+         container: 'chart-1-container',
+         type: 'PIE',
+         options: {
+           pieHole: 4/9,
+           colors: colors,
+           'title': 'Top Countries (by sessions)'
+         }
+       }
+     });
+     dataChart1.execute();
+     data_div = {};
+     data_div["chart-container"] = ["ga:sessions", "Page views by seesions"]
+     data_div["chart-2-container"] = ["ga:pageviews", "Page views"]
+     data_div["chart-3-container"] =["ga:totalEvents", "Downloads"]
+     $.each( data_div, function( key, value_data ) {
+       var lineChart = new gapi.analytics.googleCharts.DataChart({
+           reportType: 'ga',
+           query: {
+               'ids': 'ga:192803239',
+               metrics: value_data[0],
+               dimensions: 'ga:date',
+               'start-date': '30daysAgo',
+               'end-date': 'today'
+           },
+           chart: {
+               container: key,
+               type: 'LINE',
+               options: {
+                   width: '100%',
+                   'title': value_data[1]
+               }
+           }
+       });
+       lineChart.execute();
+     });
+   });
+   
+   // Replace with your view ID.
+   var VIEW_ID = '192803239';
+   function queryReports(argument) {
+     queryReportsshow();
+     data_reports = {};
+     data_reports["query_output"] = ["2010-01-01", "today", "ga:totalEvents"];
+     data_reports["query_output_yetserday"] = ["yesterday", "yesterday", "ga:totalEvents"];
+     d = new Date();
+     var pastYear = d.getFullYear() - 1;
+     start_date = pastYear + "-01-01";
+     end_date = pastYear + "-12-31";
+     data_reports["query_output_last_year"] = [start_date, end_date, "ga:totalEvents"];
+     $.each( data_reports, function( key, value ) {
+       reports_download(value[0], value[1], key)
+     });
+     country_map("2010-01-01", "today")
+   }
+   function reports_download(start_date, end_date, id) {
+     gapi.client.request({
+       path: '/v4/reports:batchGet',
+       root: 'https://analyticsreporting.googleapis.com/',
+       method: 'POST',
+       body: {
+         reportRequests: [
+           {
+             viewId: VIEW_ID,
+             dateRanges: [
+               {
+                 startDate: start_date,
+                 endDate: end_date
+               }
+             ],
+             metrics: [
+               {
+                 expression: 'ga:totalEvents'
+               }
+             ]
+           }
+         ]
+       }
+     }).then( eval(id) ,console.error.bind(console));
+   }
+   function query_output(response){
+     update_table(response, "query_output");
+   }
+   function query_output_yetserday(response){
+     update_table(response, "query_output_yetserday");
+   }
+   function query_output_last_year(response){
+     update_table(response, "query_output_last_year");
+   }
+   function update_table(response, id){
+     var formattedJson = JSON.stringify(response.result, null, 2);
+     $('#'+id).text(response.result["reports"]["0"].data.maximums[0]["values"][0]);
+   }
+   function country_map(start_date, end_date) {
+     gapi.client.request({
+       path: '/v4/reports:batchGet',
+       root: 'https://analyticsreporting.googleapis.com/',
+       method: 'POST',
+       body: {
+         reportRequests: [
+           {
+             viewId: VIEW_ID,
+             dateRanges: [
+               {
+                 startDate: start_date,
+                 endDate: end_date
+               }
+             ],
+             metrics: [
+               {
+                 expression: 'ga:totalEvents'
+               }
+             ],
+             "dimensions":[
+             {
+               "name":"ga:city"
+             },{
+               "name":"ga:eventLabel"
+             }]
+           }
+         ]
+       }
+     }).then( displayResultscountry ,console.error.bind(console));
+   }
+   function displayResultscountry(response){
+     data = response.result.reports[0].data.rows
+     map_data = [];
+     var js_array = [<%= raw @file_title.to_json %>];
+     console.log(js_array);
+     map_data.push(['City', 'Downloads'])
+     console.log(response)
+     $.each( data, function( key, value ) {
+       var check = js_array[0][value.dimensions.toString().split(',')[1]];
+       // if(typeof check !== "undefined"){
+         $('.city-download').show();
+         var download_count = parseInt(value.metrics[0].values);
+         // $.each( map_data, function( index, map_data_value ){
+         //   // if (map_data_value[0] == value.dimensions.toString().split(',')[0] && map_data_value[1] == value.dimensions.toString().split(',')[0] + ", "+ check) {
+         //     download_count = download_count + parseInt(map_data_value[2]);
+         //     map_data.splice( index, 1 );
+         //     return false;
+         // });
+         console.log(download_count)
+         map_data.push( [value.dimensions.toString().split(',')[0], download_count] );
+       // }
+     });
+     console.log(map_data)
+     google.charts.load('current', {
+       'packages':['geochart'],
+       'mapsApiKey': 'AIzaSyD2vVnZrEmDqerTir8GcIHXAZyYnheyl8A'
+     });
+     google.charts.setOnLoadCallback(drawRegionsMap);
+     google.charts.load('current', {
+       'packages': ['geochart'],
+       'mapsApiKey': 'AIzaSyD2vVnZrEmDqerTir8GcIHXAZyYnheyl8A'
+     });
+     google.charts.setOnLoadCallback(drawMarkersMap);
+   }
+   function drawRegionsMap() {
+     var data = google.visualization.arrayToDataTable(map_data);
+     var options = {
+       displayMode: 'markers',
+       colorAxis: {colors: ['red', 'green','pink', 'yellow']}
+     };
+     var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+     chart.draw(data, options);
+   };
+   alert = function() {};
+</script>
+<script src="https://apis.google.com/js/client:platform.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
